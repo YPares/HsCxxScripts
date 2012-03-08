@@ -1,0 +1,76 @@
+#!/bin/bash
+# To be executed from project root (../ relatively to this file)
+
+# CONFIG:
+
+cxx_files=$(find . -iname "*.cxx")
+
+hs_files=$(find . -iname "*.hs")
+
+
+hs_path=""  # Colon-separated list. If empty, then not considerated
+
+build_dir="_build"
+
+c_libs="-lstdc++"
+
+#--------------------------------------
+
+target()
+{
+    t="$1"
+    shift
+    mkdir -p "$build_dir/$t"
+    inc=""
+    [ -n "$hs_path" ] && inc=-i"$hs_path"
+    eval ghc "$inc" -outputdir "$build_dir/$t" "$@" 
+}
+
+build_cxx_check()
+{
+    target "check" -v0 -O0 -fPIC -shared $cxx_files $c_libs -o "$build_dir/check/libcxxforcheck.so"
+}
+
+build_check()
+{
+    build_cxx_check &&
+    target "check" -v0 -O0 -no-link $hs_files
+}
+
+build_hs_tags()
+{
+    build_cxx_check &&
+    target "for_tags" -v0 -O0 $hs_files -L"$build_dir/check" -lcxxforcheck -e ":ctags!"
+}
+
+build_tags()
+{
+    build_hs_tags &&
+    ctags --extra=+q --recurse --append
+}
+
+normal_build()
+{
+    t="$1"
+    shift
+    target "$t" $hs_files $cxx_files $c_libs -o "$build_dir/$t/main" "$@"
+}
+
+build_incremental()
+{
+    normal_build "incremental"
+}
+
+build_final()
+{
+    normal_build "final" -O2
+}
+
+#--------------------------------------
+
+if [ -n "$1" ]; then
+    eval "build_$1"
+else
+    build_incremental
+fi
+
