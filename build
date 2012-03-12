@@ -8,11 +8,13 @@ cxx_files=$(find . -iname "*.cxx")
 hs_files=$(find . -iname "*.hs")
 
 
-hs_path=""  # Colon-separated list. If empty, then not considerated
+hs_include_dirs=""  # Colon-separated list. If empty, then not considerated
 
 build_dir="_build"
 
-c_libs="-lstdc++"
+cxx_libs="-lstdc++"  # Args preceded by -l
+cxx_include_dirs=""  # Args preceded by -I
+cxx_lib_dirs=""  # Args preceded by -L
 
 #--------------------------------------
 
@@ -22,13 +24,13 @@ target()
     shift
     mkdir -p "$build_dir/$t"
     inc=""
-    [ -n "$hs_path" ] && inc=-i"$hs_path"
+    [ -n "$hs_include_dirs" ] && inc=-i"$hs_include_dirs"
     eval ghc "$inc" -outputdir "$build_dir/$t" "$@" 
 }
 
 build_cxx_check()
 {
-    target "check" -v0 -O0 -fPIC -shared $cxx_files $c_libs -o "$build_dir/check/libcxxforcheck.so"
+    target "check" -v0 -O0 -fPIC -shared $cxx_files $cxx_libs $cxx_include_dirs $cxx_lib_dirs -o "$build_dir/check/libcxxforcheck.so"
 }
 
 build_check()
@@ -53,7 +55,7 @@ normal_build()
 {
     t="$1"
     shift
-    target "$t" $hs_files $cxx_files $c_libs -o "$build_dir/$t/main" "$@"
+    target "$t" $hs_files $cxx_files $cxx_libs $cxx_include_dirs $cxx_lib_dirs -o "$build_dir/$t/main" "$@"
 }
 
 build_incremental()
