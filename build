@@ -42,7 +42,7 @@ build_check()
 build_hs_tags()
 {
     build_cxx_check &&
-    target "for_tags" -v0 -O0 $hs_files -L"$build_dir/check" -lcxxforcheck -e ":ctags!"
+    target "for_tags" -v0 -O0 $hs_files -L"$build_dir/check" $cxx_lib_dirs $cxx_libs -lcxxforcheck -e ":ctags!"
 }
 
 build_tags()
